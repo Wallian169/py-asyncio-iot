@@ -29,15 +29,34 @@ class IOTService:
     async def register_device(self, device: Device) -> str:
         await device.connect()
         device_id = generate_id()
+        attempts_left = 7
+        while device_id in self.devices:
+            print(
+                f"Device with id {device_id} already registered"
+                f"Gererating new one..."
+            )
+            device_id = generate_id()
+            attempts_left -= 1
+            if attempts_left == 0:
+                print("Unable to register device, trying again...")
+            print(f"Attempts left: {attempts_left}")
         self.devices[device_id] = device
         return device_id
 
     async def unregister_device(self, device_id: str) -> None:
-        self.devices.get(device_id).disconnect()
-        del self.devices[device_id]
+        try:
+            self.devices[device_id].disconnect()
+            del self.devices[device_id]
+        except KeyError:
+            print(f"Device {device_id} not found")
+
 
     async def get_device(self, device_id: str) -> Device:
-        return self.devices.get(device_id)
+        try:
+            return self.devices.get(device_id)
+        except AttributeError:
+            print(f"Device {device_id} not found")
+
 
     async def run_program(self, program: list[Message]) -> None:
         print("=====RUNNING PROGRAM======")
@@ -46,4 +65,7 @@ class IOTService:
         print("=====END OF PROGRAM======")
 
     async def send_msg(self, msg: Message) -> None:
-       await self.devices.get(msg.device_id).send_message(msg.msg_type, msg.data)
+       try:
+           await self.devices.get(msg.device_id).send_message(msg.msg_type, msg.data)
+       except AttributeError:
+           print("Device not found")

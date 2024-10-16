@@ -9,7 +9,7 @@ from iot.service import IOTService
 
 async def run_sequence(*functions: Awaitable[Any]) -> None:
     for function in functions:
-        await function
+        await function # Coroutine obj -> not callable!
 
 
 async def run_parallel(*functions: Awaitable[Any]) -> None:
@@ -17,10 +17,8 @@ async def run_parallel(*functions: Awaitable[Any]) -> None:
 
 
 async def main() -> None:
-    # create an IOT service
     service = IOTService()
 
-    # create and register a few devices
     hue_light = HueLightDevice()
     speaker = SmartSpeakerDevice()
     toilet = SmartToiletDevice()
@@ -31,30 +29,30 @@ async def main() -> None:
         service.register_device(toilet)
     )
 
+    start_program = [
+        Message(hue_light_id, MessageType.SWITCH_ON),
+        Message(hue_light_id, MessageType.SWITCH_OFF),
+        Message(speaker_id, MessageType.PLAY_SONG, "Rick Astley - Never Gonna Give You Up"),
+    ]
+
+    turn_off_program = [
+        Message(hue_light_id, MessageType.SWITCH_OFF),
+        Message(speaker_id, MessageType.SWITCH_OFF),
+    ]
+
+    toilet_program = [
+        Message(toilet_id, MessageType.FLUSH),
+        Message(toilet_id, MessageType.CLEAN),
+    ]
+
+    sleep_program = (
+        service.run_program(turn_off_program),
+        run_sequence(service.run_program(toilet_program))
+    )
+
     await run_sequence(
-        service.run_program(
-            [
-                Message(hue_light_id, MessageType.SWITCH_ON),
-                Message(hue_light_id, MessageType.SWITCH_OFF),
-                Message(speaker_id, MessageType.PLAY_SONG, "Rick Astley - Never Gonna Give You Up"),
-            ]
-        ),
-        run_parallel(
-            service.run_program(
-                [
-                    Message(hue_light_id, MessageType.SWITCH_OFF),
-                    Message(speaker_id, MessageType.SWITCH_OFF),
-                ]
-            ),
-            run_sequence(
-                service.run_program(
-                    [
-                        Message(toilet_id, MessageType.FLUSH),
-                        Message(toilet_id, MessageType.CLEAN),
-                    ]
-                )
-            )
-        )
+        service.run_program(start_program),
+        run_parallel(*sleep_program)
     )
 
 
