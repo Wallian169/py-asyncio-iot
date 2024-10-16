@@ -31,23 +31,6 @@ async def main() -> None:
         service.register_device(toilet)
     )
 
-    # create a few programs
-    # wake_up_program = [
-    #     Message(hue_light_id, MessageType.SWITCH_ON),
-    #     Message(speaker_id, MessageType.SWITCH_ON),
-    #     Message(speaker_id, MessageType.PLAY_SONG, "Rick Astley - Never Gonna Give You Up"),
-    # ]
-    #
-    # sleep_program = [
-    #     Message(hue_light_id, MessageType.SWITCH_OFF),
-    #     Message(speaker_id, MessageType.SWITCH_OFF),
-    #     Message(toilet_id, MessageType.FLUSH),
-    #     Message(toilet_id, MessageType.CLEAN),
-    # ]
-
-    # run the programs
-    # service.run_program(wake_up_program)
-    # service.run_program(sleep_program)
     await run_sequence(
         service.run_program(
             [
